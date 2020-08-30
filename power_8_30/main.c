@@ -48,7 +48,7 @@ int main(void)
     {
         True_voltage=getVoltage();
 
-        if((True_voltage-pid.setPoint>=0.011)||(pid.setPoint-True_voltage>=0.011))
+        if((True_voltage-pid.setPoint>=0.100)||(pid.setPoint-True_voltage>=0.100))
             pidAdjust(True_voltage);
 
         my_key();
@@ -59,37 +59,45 @@ int main(void)
 }
 
 /******************************AD值读取函数**********************************/
-int j=0;
-float sum=0;
+int j=0,j_c=0;
+float sum=0,sum_c=0;
+float Voltage,Voltage_out=50;
+float Voltage2;
+float current;
 float getVoltage()//可
 {
     //测两个的时候为什么是反的
-        unsigned int Value,Value2;
-        float Voltage,Voltage_out=40;
-        float Voltage2;
-        float current;
-        Value2 = Write_SIP(0xf38b);           //AD数值     Conversion Register
-        Voltage2=change_voltage(Value2,4.096);
-        current=Voltage2/0.6052;
-        DispFloatat(80,2,current,1,3);//显示电流值
-        suprotect(Voltage2);
-        usleep(20);
-        if(j>5){
-            Voltage_out=sum/5;
-            DispFloatat(72,0,Voltage_out,2,3);//显示电压值
-            j=0;
-            sum=0;
-        }
-        else
-        {
-            Value = Write_SIP(0xe38b);           //AD数值     Conversion Register
-            Voltage=change_voltage(Value,4.096);
-            Voltage=Voltage*11.98;//-(1.519*current-0.1115)
-            sum+=Voltage;
-            j++;
-        }
-        return Voltage_out;
+    unsigned int Value,Value2;
 
+    float Voltage2;
+    float current;
+    Value2 = Write_SIP(0xf38b);           //AD数值     Conversion Register
+    Voltage2=change_voltage(Value2,4.096);
+    current=Voltage2/0.6052;
+    DispFloatat(80,2,current,1,3);//显示电流值
+    suprotect(Voltage2);
+    usleep(20);
+    if(j>=100){
+        Voltage_out=sum/100;
+        DispFloatat(72,0,Voltage_out,2,3);//显示电压值
+        j=0;
+        sum=0;
+    }
+    else
+    {
+        Value = Write_SIP(0xe38b);           //AD数值     Conversion Register
+        Voltage=change_voltage(Value,4.096);
+        Voltage=Voltage*11.98;//-(1.519*current-0.1115)
+        sum+=Voltage;
+        j++;
+    }
+    return Voltage_out;
+
+//        Voltage2=change_voltage(Value2,4.096);
+//        current=Voltage2/0.6052;
+//        DispFloatat(80,2,current,1,3);//显示电流值
+//        suprotect(Voltage2);
+//        usleep(20);
 //        Value = Write_SIP(0xe38b);           //AD数值     Conversion Register
 //        Voltage=change_voltage(Value,4.096);
 //        Voltage=Voltage*11.98;//-(1.519*current-0.1115)
@@ -165,7 +173,7 @@ void initPara()
 {
   duty = 200;    //测试值？不确定
   pid.setPoint = 36;   ////设定值，不确定
-  adjust_pid(&pid, 0.69, 0.029, 0);//调整PID系数
+  adjust_pid(&pid, 1.000, 0.100, 0);//调整PID系数
   adjust_pid_limit(&pid, -10, 10);//设定PID误差增量的限制范围
   ADS1118_GPIO_Init();  //配置管脚（模拟SPI，加上Vcc、GND需要6根线，除去这俩需要4根线，故需要管脚配置）
 
