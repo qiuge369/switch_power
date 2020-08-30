@@ -4,6 +4,7 @@
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_PROGRAM.MSP430F6638.ccxml.TI MSP430 USB1/MSP430" value="${build_artifact:8_30_power}"/>
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_PROJECT.MSP430F6638.ccxml.TI MSP430 USB1/MSP430" value="8_30_power"/>
 <stringAttribute key="com.ti.ccstudio.debug.debugModel.ATTR_TARGET_CONFIG" value="${target_config_active_default:8_30_power}"/>
+<stringAttribute key="com.ti.ccstudio.debug.debugModel.MRU_PROGRAM.MSP430F6638.ccxml.TI MSP430 USB1/MSP430" value="D:/GITHUP\switch_power\switch_power\power_8_30\Debug\8_30_power.out"/>
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
 <listEntry value="/8_30_power"/>
 </listAttribute>
