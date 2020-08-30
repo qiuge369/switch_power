@@ -1,0 +1,1 @@
+"./key_button.obj" "./main.obj" "./oled.obj" "./pid_delta.obj" "./q_ADS1118.obj" "./setclock.obj" "../lnk_msp430f6638.cmd" -llibmath.a -llibc.a 
