@@ -57,7 +57,6 @@ int main(void)
         {
             pidAdjust(True_voltage);
         }
-
         my_key();
         DispFloatat(72,4,pid.setPoint,2,3);//显示
         DispFloatat(16,6,pid.Proportion,2,2);//显示
@@ -77,9 +76,10 @@ float getVoltage()//可
 
     suprotect(Voltage2);
     DispFloatat(80,2,current,1,3);//显示电流值
+
     Value = Write_SIP(0xe38b);           //AD数值     Conversion Register
     Voltage=change_voltage(Value,4.096);
-    Voltage=Voltage*11.98;//-(1.519*current-0.1115)
+    Voltage=Voltage*11.98-(0.01404*current*current*current*current-0.0781*current*current*current+0.1551*current*current-0.04532*current-0.09368);//-0.08*current
     DispFloatat(72,0,Voltage,2,3);//显示电压值
     return Voltage;
 }
