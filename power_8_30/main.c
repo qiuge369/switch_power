@@ -1,7 +1,3 @@
-/* *
- * PWM���������ѹ��Ȼ��ADS118������ѹֵ���پ���PID�������׼ȷ�ĵ�ѹֵ��
- * __delay_cycles(20000000);//��ʱ5S��
- * * * */
 #include <msp430f6638.h>
 #include "oled.h"
 #include "bmp.h"
@@ -11,7 +7,7 @@
 #include "q_ADS1118.h"
 
 
-//��������
+//
 void initPWM(void);
 void initPara();
 float getVoltage();
@@ -21,23 +17,21 @@ void DispFloatat(unsigned char x,unsigned char y,float dat,unsigned char len1,un
 void my_key();
 void suprotect(float vol);
 
-//��������
-double duty=0;//ռ�ձ�
-PID_DELTA pid;        //����pid�ṹ�����
-double dealtV=0;  //pid�����
-unsigned int AD_bit; //�����ȡADת����ֵ
+//
+double duty=0;//ռ ձ
+PID_DELTA pid;        //    pid ṹ
+double dealtV=0;  //pidת    ֵ
 float True_voltage=0;
 int key_value;
-double num=0;//����������ֵ
+double num=0;//          ֵ
 
 int main(void)
 {
     WDTCTL = WDTPW | WDTHOLD;   // stop watchdog timer
     SetClock_MCLK12MHZ_SMCLK24MHZ_ACLK32_768K();//12MHz
-//    UCSCTL5|=DIVS_2;//ʹ��USCͳһʱ��ϵͳ����Ԥ��Ƶ����SMCLK����4��Ƶ������������1M
 
     initPWM();
-    initPara();//��ʼֵ
+    initPara();//  ʼֵ
     OLED_Init();/*init OLED*/
     OLED_Clear(); /*clear OLED screen*/
     init_key();
@@ -48,63 +42,62 @@ int main(void)
     {
         True_voltage=getVoltage();
 
-        if((True_voltage-pid.setPoint>=0.08)||(pid.setPoint-True_voltage>=0.080))
+        if((True_voltage-pid.setPoint>=0.06)||(pid.setPoint-True_voltage>=0.020))
             pidAdjust(True_voltage);
 
         my_key();
-        DispFloatat(72,4,pid.setPoint,2,3);//��ʾ
-        DispFloatat(16,6,pid.Proportion,2,2);//��ʾ
-        DispFloatat(72,6,pid.Integral,2,3);//��ʾ
+        DispFloatat(72,4,pid.setPoint,2,3);//  ʾ
+        DispFloatat(16,6,pid.Proportion,2,2);//  ʾ
+        DispFloatat(72,6,pid.Integral,2,3);//  ʾ
     }
 }
 
-/******************************ADֵ��ȡ����**********************************/
+/******************************ADֵ  ȡ    **********************************/
 int j=0,j_c=0;
 float sum=0,sum_c=0;
-float Voltage,Voltage_out=50;
+float Voltage,Voltage_out=45;
 float Voltage2;
 float current;
-float getVoltage()//��
+float getVoltage()//
 {
-    //��������ʱ��Ϊʲô�Ƿ���
     unsigned int Value,Value2;
 
     float Voltage2;
     float current;
-    Value2 = Write_SIP(0xf38b);           //AD��ֵ     Conversion Register
+    Value2 = Write_SIP(0xf38b);           //AD  ֵ     Conversion Register
     Voltage2=change_voltage(Value2,4.096);
     current=Voltage2/0.6052;
-    DispFloatat(80,2,current,1,3);//��ʾ����ֵ
+    DispFloatat(80,2,current,1,3);//  ʾ    ֵ
     suprotect(Voltage2);
     usleep(20);
-    if(j>=100){
-        Voltage_out=sum/100;
-        DispFloatat(72,0,Voltage_out,2,3);//��ʾ��ѹֵ
-        j=0;
-        sum=0;
-    }
-    else
-    {
-        Value = Write_SIP(0xe38b);           //AD��ֵ     Conversion Register
-        Voltage=change_voltage(Value,4.096);
-        Voltage=Voltage*11.98;//-(1.519*current-0.1115)
-        sum+=Voltage;
-        j++;
-    }
-    return Voltage_out;
+//    if(j>=50){
+//        Voltage_out=sum/50;
+//        DispFloatat(72,0,Voltage_out,2,3);//  ʾ  ѹֵ
+//        j=0;
+//        sum=0;
+//    }
+//    else
+//    {
+//        Value = Write_SIP(0xe38b);           //AD  ֵ     Conversion Register
+//        Voltage=change_voltage(Value,4.096);
+//        Voltage=Voltage*11.98+0.750;//-(1.519*current-0.1115)
+//        sum+=Voltage;
+//        j++;
+//    }
+//    return Voltage_out;
 
 //        Voltage2=change_voltage(Value2,4.096);
 //        current=Voltage2/0.6052;
-//        DispFloatat(80,2,current,1,3);//��ʾ����ֵ
+//        DispFloatat(80,2,current,1,3);//  ʾ    ֵ
 //        suprotect(Voltage2);
 //        usleep(20);
-//        Value = Write_SIP(0xe38b);           //AD��ֵ     Conversion Register
-//        Voltage=change_voltage(Value,4.096);
-//        Voltage=Voltage*11.98;//-(1.519*current-0.1115)
-//        DispFloatat(72,0,Voltage,2,3);//��ʾ��ѹֵ
-//        return Voltage;
+        Value = Write_SIP(0xe38b);           //AD  ֵ     Conversion Register
+        Voltage=change_voltage(Value,4.096);
+        Voltage=Voltage*11.98;//-(1.519*current-0.1115)
+        DispFloatat(72,0,Voltage,2,3);//  ʾ  ѹֵ
+        return Voltage;
 }
-/*****************************��������*********************************/
+/*****************************        *********************************/
 int c_i=0;
 void suprotect(float vol)
 {
@@ -113,9 +106,9 @@ void suprotect(float vol)
             c_i++;
             if(c_i>10)
             {
-                P8OUT |= BIT4;        //�ø�
-                __delay_cycles(120000000);//��ʱ5S��
-                P8OUT &= ~BIT4;        //�ø�
+                P8OUT |= BIT4;        // ø
+                __delay_cycles(120000000);//  ʱ5S
+                P8OUT &= ~BIT4;        // ø
             }
         }
     else
@@ -123,65 +116,65 @@ void suprotect(float vol)
 
 
 }
-/*****************************PID���ƺ�ѹ*********************************/
+/*****************************PID   ƺ ѹ*********************************/
 void pidAdjust(float in_voltage)
 {
-  dealtV = PidDeltaCal(&pid,in_voltage);  //�����������
-  if((duty + dealtV) > 300)//65%
+  dealtV = PidDeltaCal(&pid,in_voltage);  //
+  if((duty + dealtV) > 280)
   {
-      duty = 300;
-    changePWM(duty);                      //��Ч����
+      duty = 280;
+    changePWM(duty);                      //  Ч
   }
   else if((duty + dealtV) < 0)
   {
       duty = 0;
-    changePWM(duty);                      //��Ч����
+    changePWM(duty);                      //  Ч
   }else{
-      duty = duty + dealtV;                 //����ռ�ձ�
-    changePWM(duty);                      //��Ч����
+      duty = duty + dealtV;                 //    ռ ձ
+    changePWM(duty);                      //  Ч
   }
 }
 
-/****************************�ı�PWMռ�ձ�*********************************/
-void changePWM(int duty_value)//��
+/**************************** ı PWMռ ձ *********************************/
+void changePWM(int duty_value)//
 {
     TA0CCR1 = duty_value;
-    TA0CCR2 = duty_value+1;//��֤��·PWM����������֮��ͬ��
+    TA0CCR2 = duty_value+1;//  ֤  ·PWM          ֮  ͬ
 }
-/****************************PWM��ʼ�����*********************************/
-void initPWM(void)//��
+/****************************PWM  ʼ     *********************************/
+void initPWM(void)//
 {
   P1DIR |= BIT2;
-  P1SEL |= BIT2;        //ѡ��TA.1����
+  P1SEL |= BIT2;        //ѡ  TA.1
 
   P1DIR |= BIT3;
-  P1SEL |= BIT3;        //ѡ��TA.1����
+  P1SEL |= BIT3;        //ѡ  TA.1
 
-  TA0CTL |=TASSEL_2 + MC_3 + TACLR;//����A0������,ʱ��ԴSMCLK������ģʽ��ͬʱ���������//*���ü�����
-  //TASSEL_2ѡ����SMCLK��MC_1����ģʽ�����������TACLR
-  TA0CCTL0 = /*OUTMOD_7+*/  CCIE;//����ȽϼĴ���0��������ģʽΪ2��ͬʱʹ�ܶ�ʱ���жϣ�CCR0��Դ�жϣ���CCIE����ȽϼĴ�����ʹ������
-  TA0CCR0 = 480;//����ȽϼĴ���,���ö�ʱ���ж�Ƶ��25K
+  TA0CTL |=TASSEL_2 + MC_3 + TACLR;//    A0      ,ʱ  ԴSMCLK      ģʽ  ͬʱ         //*   ü
+  //TASSEL_2ѡ    SMCLK  MC_1    ģʽ           TACLR
+  TA0CCTL0 = /*OUTMOD_7+*/  CCIE;//    ȽϼĴ   0        ģʽΪ2  ͬʱʹ ܶ ʱ   жϣ CCR0  Դ жϣ   CCIE    ȽϼĴ     ʹ
+  TA0CCR0 = 480;//    ȽϼĴ   ,   ö ʱ   ж Ƶ  25K
   TA0CCTL1 |= OUTMOD_2; // TD0CCR1, Reset/Set
-  TA0CCR1 = 240;             //ռ�ձ�CCR1/CCR0
+  TA0CCR1 = 240;             //ռ ձ CCR1/CCR0
 
   TA0CCTL2 |= OUTMOD_6; // TD0CCR2, Reset/Set
-  TA0CCR2 = 240;             //ռ�ձ�CCR2/CCR0
+  TA0CCR2 = 240;             //ռ ձ CCR2/CCR0
 }
 
-/****************************���ó�ʼֵ*********************************/
+/****************************   ó ʼֵ*********************************/
 void initPara()
 {
-  duty = 200;    //����ֵ����ȷ��
-  pid.setPoint = 36;   ////�趨ֵ����ȷ��
-  adjust_pid(&pid, 1.000, 0.100, 0);//����PIDϵ��
-  adjust_pid_limit(&pid, -10, 10);//�趨PID������������Ʒ�Χ
-  ADS1118_GPIO_Init();  //���ùܽţ�ģ��SPI������Vcc��GND��Ҫ6���ߣ���ȥ������Ҫ4���ߣ�����Ҫ�ܽ����ã�
+  duty = 200;    //    ֵ    ȷ
+  pid.setPoint = 36;   //// 趨ֵ    ȷ
+  adjust_pid(&pid, 0.0000, 0.087000,0.000000);//    PIDϵ
+  adjust_pid_limit(&pid, -10, 10);// 趨PID            Ʒ Χ
+  ADS1118_GPIO_Init();  //   ùܽţ ģ  SPI      Vcc  GND  Ҫ6   ߣ   ȥ      Ҫ4   ߣ     Ҫ ܽ    ã
 
-  P8DIR |= BIT4;    //���������ܽ�
+  P8DIR |= BIT4;    //         ܽ
 }
 
-/****************************��������ʾ����********************************/
-//dat:����    len1:������λ��    len2:С����λ��
+/****************************        ʾ    ********************************/
+//dat:        len1:      λ      len2:С    λ
 const long numtab[]={
   1,10,100,1000,10000,100000,1000000,10000000,100000000,1000000000,10000000000};
 char a;
@@ -214,8 +207,8 @@ void DispFloatat(unsigned char x,unsigned char y,float dat,unsigned char len1,un
         OLED_ShowNum(x+8*len1+8,y,dat2,len2,16);
 
 }
-/****************************��������********************************/
-//������ֻ��Ҫ��ʾ��λ�԰ɣ�
+/****************************        ********************************/
+//      ֻ  Ҫ  ʾ  λ ԰ɣ
 int i=0;
 void my_key()
 {
@@ -223,11 +216,11 @@ void my_key()
     key_value= key();   /*scan Array_button, get the key value*/
             if(key_value!=0)
             {
-                    if(i>1)//�ж���0����1
+                    if(i>1)// ж   0    1
                         {
                            i=0;
                            if(num<=36.0&&num>=30.0)
-                               pid.setPoint=num;//�趨������ѹֵ
+                               pid.setPoint=num;// 趨      ѹֵ
                            OLED_ShowString(0,6, "    ");
                            num=0;
                         }
@@ -270,7 +263,7 @@ void my_key()
                               if(pid.Proportion>0.0000001)
                                   pid.Proportion-=0.01;
 //                            if(pid.setPoint<36.0)
-//                                pid.setPoint+=1;//�����趨������ѹֵ
+//                                pid.setPoint+=1;//     趨      ѹֵ
                               key_value=0;
                             break;
                       case(5):
@@ -308,9 +301,9 @@ void my_key()
                             break;
                         case(8)://B
 //                              if(pid.setPoint>30.0)
-//                                  pid.setPoint-=1;//�趨������ѹֵ
+//                                  pid.setPoint-=1;// 趨      ѹֵ
                               if( pid.Integral>0.0000001)
-                                  pid.Integral-=0.001;//��I
+                                  pid.Integral-=0.001;//  I
                               key_value=0;
                               break;
                       case(9):
@@ -347,7 +340,7 @@ void my_key()
                             key_value=0;
                             break;
                       case(12)://C
-                              pid.Proportion+=0.01;//��P
+                              pid.Proportion+=0.01;//  P
                               key_value=0;
                               break;
                       case(13):
@@ -364,12 +357,12 @@ void my_key()
                             i++;
                             key_value=0;
                             break;
-                      case(15)://#ȷ��
-//                            pid.setPoint=num;//�趨������ѹֵ
+                      case(15)://#ȷ
+//                            pid.setPoint=num;// 趨      ѹֵ
                             key_value=0;
                             break;
                       case(16)://D
-                            pid.Integral+=0.001;//��I
+                            pid.Integral+=0.001;//  I
                             key_value=0;
                             break;
                       default:break;
