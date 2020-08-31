@@ -31,7 +31,7 @@ double num=0;//按键所得数值
 
 int j=0,j_c=0;
 float sum=0,sum_c=0;
-float Voltage=0,Voltage_out=50;
+float Voltage,Voltage_out=50;
 float Voltage2;
 float current;
 
@@ -46,11 +46,17 @@ int main(void)
     OLED_Clear(); /*clear OLED screen*/
     init_key();
     OLED_ShowString(0,0, "Voltage:");
-    OLED_ShowString(0,2, "current:");
-    OLED_ShowString(0,4, "set:");
+    OLED_ShowString(0,2, "Current:");
+    OLED_ShowString(0,4, "Set:");
+
     while(1)
     {
         True_voltage=getVoltage();
+
+        if((True_voltage-pid.setPoint>=0.031)||(pid.setPoint-True_voltage>=0.041))
+        {
+            pidAdjust(True_voltage);
+        }
 
         my_key();
         DispFloatat(72,4,pid.setPoint,2,3);//显示
@@ -60,8 +66,8 @@ int main(void)
 }
 
 /******************************AD值读取函数**********************************/
-int i_0=1;
-float getVoltage()//不可
+
+float getVoltage()//可
 {
     //测两个的时候为什么是反的
     unsigned int Value,Value2;
@@ -70,66 +76,12 @@ float getVoltage()//不可
     current=Voltage2/0.6052;
 
     suprotect(Voltage2);
-    if(current<0.12000)
-    {
-       current=0;
-       i_0++;
-       pid.Integral=0.20;
-    }
-    else
-    {
-        pid.Integral=0.090;
-        i_0=0;
-    }
-
     DispFloatat(80,2,current,1,3);//显示电流值
-    if(i_0>2)
-    {
-        if(j>=10){
-            Voltage_out=sum/10+3.75;
-            if((Voltage-pid.setPoint>=0.031)||(pid.setPoint-Voltage>=0.041))
-               {
-                   pidAdjust(Voltage);
-               }
-            DispFloatat(72,0,Voltage_out,2,3);//显示电压值
-            j=0;
-            sum=0;
-        }
-        else
-        {
-            Value = Write_SIP(0xe38b);           //AD数值     Conversion Register
-            Voltage=change_voltage(Value,4.096);
-            Voltage=Voltage*11.98;
-            sum+=Voltage;
-            j++;
-        }
-    }
-    else
-    {
-
-            DispFloatat(72,0,Voltage,2,3);//显示电压值
-            Value = Write_SIP(0xe38b);           //AD数值     Conversion Register
-            Voltage=change_voltage(Value,4.096);
-            Voltage=Voltage*11.98-(0.1592*current-0.4858)-0.35;//
-            sum+=Voltage;
-            j++;
-            if((Voltage-pid.setPoint>=0.031)||(pid.setPoint-Voltage>=0.041))
-            {
-                pidAdjust(Voltage);
-            }
-    }
-    return Voltage_out;
-
-//        Voltage2=change_voltage(Value2,4.096);
-//        current=Voltage2/0.6052;
-//        DispFloatat(80,2,current,1,3);//显示电流值
-//        suprotect(Voltage2);
-//        usleep(20);
-//        Value = Write_SIP(0xe38b);           //AD数值     Conversion Register
-//        Voltage=change_voltage(Value,4.096);
-//        Voltage=Voltage*11.98;//-(1.519*current-0.1115)
-//        DispFloatat(72,0,Voltage,2,3);//显示电压值
-//        return Voltage;
+    Value = Write_SIP(0xe38b);           //AD数值     Conversion Register
+    Voltage=change_voltage(Value,4.096);
+    Voltage=Voltage*11.98;//-(1.519*current-0.1115)
+    DispFloatat(72,0,Voltage,2,3);//显示电压值
+    return Voltage;
 }
 /*****************************过流保护*********************************/
 int c_i=0;
@@ -200,8 +152,8 @@ void initPara()
 {
   duty = 200;    //测试值？不确定
   pid.setPoint = 36;   ////设定值，不确定
-  adjust_pid(&pid, 0.0000, 0.0900, 0);//调整PID系数
-  adjust_pid_limit(&pid, -20, 20);//设定PID误差增量的限制范围
+  adjust_pid(&pid, 0, 0.0900, 0);//调整PID系数
+  adjust_pid_limit(&pid, -10, 10);//设定PID误差增量的限制范围
   ADS1118_GPIO_Init();  //配置管脚（模拟SPI，加上Vcc、GND需要6根线，除去这俩需要4根线，故需要管脚配置）
 
   P8DIR |= BIT4;    //过流保护管脚
@@ -242,7 +194,6 @@ void DispFloatat(unsigned char x,unsigned char y,float dat,unsigned char len1,un
 
 }
 /****************************按键函数********************************/
-//按键是只需要显示两位对吧？
 int i=0;
 void my_key()
 {
