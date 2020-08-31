@@ -1,3 +1,7 @@
+/* *
+ * PWM控制输出电压，然后ADS118采样电压值，再经过PID调节输出准确的电压值。
+ * __delay_cycles(20000000);//延时5S？
+ * * * */
 #include <msp430f6638.h>
 #include "oled.h"
 #include "bmp.h"
@@ -7,7 +11,7 @@
 #include "q_ADS1118.h"
 
 
-//
+//函数声明
 void initPWM(void);
 void initPara();
 float getVoltage();
@@ -17,21 +21,27 @@ void DispFloatat(unsigned char x,unsigned char y,float dat,unsigned char len1,un
 void my_key();
 void suprotect(float vol);
 
-//
-double duty=0;//ռ ձ
-PID_DELTA pid;        //    pid ṹ
-double dealtV=0;  //pidת    ֵ
+//变量声明
+double duty=0;//占空比
+PID_DELTA pid;        //声明pid结构体变量
+double dealtV=0;  //pid误差量
 float True_voltage=0;
 int key_value;
-double num=0;//          ֵ
+double num=0;//按键所得数值
+
+int j=0,j_c=0;
+float sum=0,sum_c=0;
+float Voltage=0,Voltage_out=50;
+float Voltage2;
+float current;
 
 int main(void)
-{
+ {
     WDTCTL = WDTPW | WDTHOLD;   // stop watchdog timer
     SetClock_MCLK12MHZ_SMCLK24MHZ_ACLK32_768K();//12MHz
 
     initPWM();
-    initPara();//  ʼֵ
+    initPara();//初始值
     OLED_Init();/*init OLED*/
     OLED_Clear(); /*clear OLED screen*/
     init_key();
@@ -42,63 +52,86 @@ int main(void)
     {
         True_voltage=getVoltage();
 
-        if((True_voltage-pid.setPoint>=0.06)||(pid.setPoint-True_voltage>=0.010))
-            pidAdjust(True_voltage);
+//        if((True_voltage-pid.setPoint>=0.031)||(pid.setPoint-True_voltage>=0.041))
+//        {
+//            pidAdjust(True_voltage);
+//        }
 
         my_key();
-        DispFloatat(72,4,pid.setPoint,2,3);//  ʾ
-        DispFloatat(16,6,pid.Proportion,2,2);//  ʾ
-        DispFloatat(72,6,pid.Integral,2,3);//  ʾ
+        DispFloatat(72,4,pid.setPoint,2,3);//显示
+        DispFloatat(16,6,pid.Proportion,2,2);//显示
+        DispFloatat(72,6,pid.Integral,2,3);//显示
     }
 }
 
-/******************************ADֵ  ȡ    **********************************/
-int j=0,j_c=0;
-float sum=0,sum_c=0;
-float Voltage,Voltage_out=45;
-float Voltage2;
-float current;
-float getVoltage()//
-{
-    unsigned int Value,Value2;
+/******************************AD值读取函数**********************************/
 
-    float Voltage2;
-    float current;
-    Value2 = Write_SIP(0xf38b);           //AD  ֵ     Conversion Register
+float getVoltage()//可
+{
+    //测两个的时候为什么是反的
+    unsigned int Value,Value2;
+    Value2 = Write_SIP(0xf38b);           //AD数值     Conversion Register
     Voltage2=change_voltage(Value2,4.096);
     current=Voltage2/0.6052;
-    DispFloatat(80,2,current,1,3);//  ʾ    ֵ
+
     suprotect(Voltage2);
-    if(current<0.19000)
-            current=0;
-//    if(j>=50){
-//        Voltage_out=sum/50;
-//        DispFloatat(72,0,Voltage_out,2,3);//  ʾ  ѹֵ
-//        j=0;
-//        sum=0;
-//    }
-//    else
-//    {
-//        Value = Write_SIP(0xe38b);           //AD  ֵ     Conversion Register
-//        Voltage=change_voltage(Value,4.096);
-//        Voltage=Voltage*11.98+0.750;//-(1.519*current-0.1115)
-//        sum+=Voltage;
-//        j++;
-//    }
-//    return Voltage_out;
+    if(current<0.12000)
+        current=0;
+    DispFloatat(80,2,current,1,3);//显示电流值
+    if(current<=0.007)
+    {
+
+        if(j>=200){
+            Voltage_out=sum/200-0.18;
+            DispFloatat(72,0,Voltage_out,2,3);//显示电压值
+            j=0;
+            sum=0;
+        }
+        else
+        {
+            Value = Write_SIP(0xe38b);           //AD数值     Conversion Register
+            Voltage=change_voltage(Value,4.096);
+            Voltage=Voltage*11.98-(0.1592*current-0.4858);//
+            sum+=Voltage;
+            j++;
+        }
+    }
+    else
+    {
+//        if(j>=100){
+//            Voltage_out=sum/100;
+//            DispFloatat(72,0,Voltage_out,2,3);//显示电压值
+//            j=0;
+//            sum=0;
+//        }
+//        else
+//        {
+            DispFloatat(72,0,Voltage,2,3);//显示电压值
+            Value = Write_SIP(0xe38b);           //AD数值     Conversion Register
+            Voltage=change_voltage(Value,4.096);
+            Voltage=Voltage*11.98-(0.1592*current-0.4858);//
+            sum+=Voltage;
+            j++;
+            if((Voltage-pid.setPoint>=0.031)||(pid.setPoint-Voltage>=0.041))
+            {
+                pidAdjust(Voltage);
+            }
+//        }
+    }
+    return Voltage_out;
 
 //        Voltage2=change_voltage(Value2,4.096);
 //        current=Voltage2/0.6052;
-//        DispFloatat(80,2,current,1,3);//  ʾ    ֵ
+//        DispFloatat(80,2,current,1,3);//显示电流值
 //        suprotect(Voltage2);
 //        usleep(20);
-            Value = Write_SIP(0xe38b);           //AD  ֵ     Conversion Register
-            Voltage=change_voltage(Value,4.096);
-            Voltage=Voltage*11.98;//-(1.519*current-0.1115)
-            DispFloatat(72,0,Voltage,2,3);//ֵ
-            return Voltage;
+//        Value = Write_SIP(0xe38b);           //AD数值     Conversion Register
+//        Voltage=change_voltage(Value,4.096);
+//        Voltage=Voltage*11.98;//-(1.519*current-0.1115)
+//        DispFloatat(72,0,Voltage,2,3);//显示电压值
+//        return Voltage;
 }
-/*****************************        *********************************/
+/*****************************过流保护*********************************/
 int c_i=0;
 void suprotect(float vol)
 {
@@ -107,9 +140,9 @@ void suprotect(float vol)
             c_i++;
             if(c_i>10)
             {
-                P8OUT |= BIT4;        // ø
-                __delay_cycles(120000000);//  ʱ5S
-                P8OUT &= ~BIT4;        // ø
+                P8OUT |= BIT4;        //置高
+                __delay_cycles(120000000);//延时5S？
+                P8OUT &= ~BIT4;        //置高
             }
         }
     else
@@ -117,65 +150,65 @@ void suprotect(float vol)
 
 
 }
-/*****************************PID   ƺ ѹ*********************************/
+/*****************************PID控制恒压*********************************/
 void pidAdjust(float in_voltage)
 {
-  dealtV = PidDeltaCal(&pid,in_voltage);  //
-  if((duty + dealtV) > 280)
+  dealtV = PidDeltaCal(&pid,in_voltage);  //返回误差增量
+  if((duty + dealtV) > 290)//65%
   {
-      duty = 280;
-    changePWM(duty);                      //  Ч
+      duty = 290;
+    changePWM(duty);                      //生效控制
   }
   else if((duty + dealtV) < 0)
   {
       duty = 0;
-    changePWM(duty);                      //  Ч
+    changePWM(duty);                      //生效控制
   }else{
-      duty = duty + dealtV;                 //    ռ ձ
-    changePWM(duty);                      //  Ч
+      duty = duty + dealtV;                 //修正占空比
+    changePWM(duty);                      //生效控制
   }
 }
 
-/**************************** ı PWMռ ձ *********************************/
-void changePWM(int duty_value)//
+/****************************改变PWM占空比*********************************/
+void changePWM(int duty_value)//可
 {
     TA0CCR1 = duty_value;
-    TA0CCR2 = duty_value+1;//  ֤  ·PWM          ֮  ͬ
+    TA0CCR2 = duty_value+1;//保证两路PWM波除了死区之外同步
 }
-/****************************PWM  ʼ     *********************************/
-void initPWM(void)//
+/****************************PWM初始化输出*********************************/
+void initPWM(void)//可
 {
   P1DIR |= BIT2;
-  P1SEL |= BIT2;        //ѡ  TA.1
+  P1SEL |= BIT2;        //选择TA.1功能
 
   P1DIR |= BIT3;
-  P1SEL |= BIT3;        //ѡ  TA.1
+  P1SEL |= BIT3;        //选择TA.1功能
 
-  TA0CTL |=TASSEL_2 + MC_3 + TACLR;//    A0      ,ʱ  ԴSMCLK      ģʽ  ͬʱ         //*   ü
-  //TASSEL_2ѡ    SMCLK  MC_1    ģʽ           TACLR
-  TA0CCTL0 = /*OUTMOD_7+*/  CCIE;//    ȽϼĴ   0        ģʽΪ2  ͬʱʹ ܶ ʱ   жϣ CCR0  Դ жϣ   CCIE    ȽϼĴ     ʹ
-  TA0CCR0 = 480;//    ȽϼĴ   ,   ö ʱ   ж Ƶ  25K
+  TA0CTL |=TASSEL_2 + MC_3 + TACLR;//配置A0计数器,时钟源SMCLK，上升模式，同时清除计数器//*配置计数器
+  //TASSEL_2选择了SMCLK，MC_1计数模式，，最后清零TACLR
+  TA0CCTL0 = /*OUTMOD_7+*/  CCIE;//捕获比较寄存器0输出，输出模式为2，同时使能定时器中断（CCR0单源中断），CCIE捕获比较寄存器的使能配置
+  TA0CCR0 = 480;//捕获比较寄存器,设置定时器中断频率25K
   TA0CCTL1 |= OUTMOD_2; // TD0CCR1, Reset/Set
-  TA0CCR1 = 240;             //ռ ձ CCR1/CCR0
+  TA0CCR1 = 240;             //占空比CCR1/CCR0
 
   TA0CCTL2 |= OUTMOD_6; // TD0CCR2, Reset/Set
-  TA0CCR2 = 240;             //ռ ձ CCR2/CCR0
+  TA0CCR2 = 240;             //占空比CCR2/CCR0
 }
 
-/****************************   ó ʼֵ*********************************/
+/****************************设置初始值*********************************/
 void initPara()
 {
-  duty = 200;    //    ֵ    ȷ
-  pid.setPoint = 36;   //// 趨ֵ    ȷ
-  adjust_pid(&pid, 0.0000, 0.087000,0.000000);//    PIDϵ
-  adjust_pid_limit(&pid, -10, 10);// 趨PID            Ʒ Χ
-  ADS1118_GPIO_Init();  //   ùܽţ ģ  SPI      Vcc  GND  Ҫ6   ߣ   ȥ      Ҫ4   ߣ     Ҫ ܽ    ã
+  duty = 200;    //测试值？不确定
+  pid.setPoint = 36;   ////设定值，不确定
+  adjust_pid(&pid, 0.0000, 0.0900, 0);//调整PID系数
+  adjust_pid_limit(&pid, -20, 20);//设定PID误差增量的限制范围
+  ADS1118_GPIO_Init();  //配置管脚（模拟SPI，加上Vcc、GND需要6根线，除去这俩需要4根线，故需要管脚配置）
 
-  P8DIR |= BIT4;    //         ܽ
+  P8DIR |= BIT4;    //过流保护管脚
 }
 
-/****************************        ʾ    ********************************/
-//dat:        len1:      λ      len2:С    λ
+/****************************浮点数显示函数********************************/
+//dat:数据    len1:整数的位数    len2:小数的位数
 const long numtab[]={
   1,10,100,1000,10000,100000,1000000,10000000,100000000,1000000000,10000000000};
 char a;
@@ -208,8 +241,8 @@ void DispFloatat(unsigned char x,unsigned char y,float dat,unsigned char len1,un
         OLED_ShowNum(x+8*len1+8,y,dat2,len2,16);
 
 }
-/****************************        ********************************/
-//      ֻ  Ҫ  ʾ  λ ԰ɣ
+/****************************按键函数********************************/
+//按键是只需要显示两位对吧？
 int i=0;
 void my_key()
 {
@@ -217,11 +250,11 @@ void my_key()
     key_value= key();   /*scan Array_button, get the key value*/
             if(key_value!=0)
             {
-                    if(i>1)// ж   0    1
+                    if(i>1)//判断是0还是1
                         {
                            i=0;
                            if(num<=36.0&&num>=30.0)
-                               pid.setPoint=num;// 趨      ѹֵ
+                               pid.setPoint=num;//设定期望电压值
                            OLED_ShowString(0,6, "    ");
                            num=0;
                         }
@@ -264,7 +297,7 @@ void my_key()
                               if(pid.Proportion>0.0000001)
                                   pid.Proportion-=0.01;
 //                            if(pid.setPoint<36.0)
-//                                pid.setPoint+=1;//     趨      ѹֵ
+//                                pid.setPoint+=1;//步进设定期望电压值
                               key_value=0;
                             break;
                       case(5):
@@ -302,9 +335,9 @@ void my_key()
                             break;
                         case(8)://B
 //                              if(pid.setPoint>30.0)
-//                                  pid.setPoint-=1;// 趨      ѹֵ
+//                                  pid.setPoint-=1;//设定期望电压值
                               if( pid.Integral>0.0000001)
-                                  pid.Integral-=0.001;//  I
+                                  pid.Integral-=0.001;//调I
                               key_value=0;
                               break;
                       case(9):
@@ -341,7 +374,7 @@ void my_key()
                             key_value=0;
                             break;
                       case(12)://C
-                              pid.Proportion+=0.01;//  P
+                              pid.Proportion+=0.01;//调P
                               key_value=0;
                               break;
                       case(13):
@@ -358,12 +391,12 @@ void my_key()
                             i++;
                             key_value=0;
                             break;
-                      case(15)://#ȷ
-//                            pid.setPoint=num;// 趨      ѹֵ
+                      case(15)://#确定
+//                            pid.setPoint=num;//设定期望电压值
                             key_value=0;
                             break;
                       case(16)://D
-                            pid.Integral+=0.001;//  I
+                            pid.Integral+=0.001;//调I
                             key_value=0;
                             break;
                       default:break;
