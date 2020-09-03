@@ -38,11 +38,6 @@ float Voltage,Voltage_out=50;
 float Voltage2;
 float current;
 
-char str[4]={0};
-int char_num=0;
-char disp[4]={0};
-char * sendstr;
-int q_num = -1;
 int recive=0;
 
 int open=0;
@@ -72,7 +67,8 @@ int main(void)
         }
         my_key();
         usrt_key();
-        DispFloatat(72,4,pid.setPoint,2,3);//显示
+//        DispFloatat(72,5,pid.setPoint,2,0);//显示
+        OLED_ShowNum(80,4,pid.setPoint,2,16);
 
     }
 }
@@ -413,7 +409,7 @@ void usrt_key()
                         P8OUT &= ~BIT4;        //置低
                        recive=0;
                      break;
-               case(103)://关
+                case(103)://关
                        open=0;
                         P8OUT |= BIT4;        //置高
                        recive=0;
@@ -443,26 +439,29 @@ void usrt_key()
                       recive=0;
                       break;
                 case(48):
-                      recive=0;
+
                       pid.setPoint=30;
-                      break;
-                case(47):
                       recive=0;
+                      break;
+                case(41):
+
                       pid.setPoint=29;
-                      break;
-                case(46):
                       recive=0;
+                      break;
+                case(40):
+
                       pid.setPoint=28;
-                      break;
-                case(45):
                       recive=0;
-                      pid.setPoint=27;
                       break;
-                case(44):
+                case(39):
+                      pid.setPoint=27;
+                      recive=0;
+                      break;
+                case(38):
                       pid.setPoint=26;
                       recive=0;
                       break;
-                case(43):
+                case(37):
                       pid.setPoint=25;
                       recive=0;
                       break;
@@ -478,7 +477,7 @@ void usrt_key()
                       recive=0;
                       pid.setPoint=39;
                       break;
-                case(58):
+                case(64):
                       pid.setPoint=40;
                       recive=0;
                     break;

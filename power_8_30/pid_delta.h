@@ -1,7 +1,7 @@
 /*
  * pid_delta.h
  *
- *  Created on: 2015Äê1ÔÂ20ÈÕ
+ *  Created on: 2015ï¿½ï¿½1ï¿½ï¿½20ï¿½ï¿½
  *      Author: acer
  */
 
@@ -13,15 +13,15 @@ extern double i_para;
 extern double d_para;
 
 ////////////////////////////////////////////////////
-//    ¶¨ÒåPID²ÎÊý½á¹¹Ìå
+//    ï¿½ï¿½ï¿½ï¿½PIDï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½
 /////////////////////////////////////////////////
-typedef struct PID_DELTA {                   //½á¹¹Ìå¶¨Òå
-	double setPoint;                       //Éè¶¨Öµ
-	double Proportion;                     //±ÈÀýÏµÊý
-	double Integral;                       //»ý·ÖÏµÊý
-	double Derivative;                     //Î¢·ÖÏµÊý
-	double LastError;                      //Error[-1] Ç°Ò»½ÚÅÄÎó²î
-	double PreError;                       //Error[-2] Ç°Á½ÅÄÎó²î
+typedef struct PID_DELTA {                   //ï¿½á¹¹ï¿½å¶¨ï¿½ï¿½
+	int setPoint;                       //ï¿½è¶¨Öµ
+	double Proportion;                     //ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½
+	double Integral;                       //ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½
+	double Derivative;                     //Î¢ï¿½ï¿½Ïµï¿½ï¿½
+	double LastError;                      //Error[-1] Ç°Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+	double PreError;                       //Error[-2] Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 	double min_result;
 	double max_result;
