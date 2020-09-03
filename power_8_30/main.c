@@ -256,7 +256,7 @@ void my_key()
                     if(i>1)//判断是0还是1
                         {
                            i=0;
-                           if(num<=36.0&&num>=30.0)
+                           if(num<=40.0&&num>=25.0)
                                pid.setPoint=num;//设定期望电压值
                            OLED_ShowString(0,6, "    ");
                            num=0;
@@ -297,7 +297,7 @@ void my_key()
                             key_value=0;
                             break;
                       case(4)://A
-                            if(pid.setPoint<36.0)
+                            if(pid.setPoint<40.0)
                                 pid.setPoint+=1;//步进设定期望电压值
                               key_value=0;
                             break;
@@ -335,11 +335,8 @@ void my_key()
                             key_value=0;
                             break;
                         case(8)://B
-                              if(pid.setPoint>30.0)
+                              if(pid.setPoint>25.0)
                                   pid.setPoint-=1;//设定期望电压值
-//                              if( pid.Integral>0.0000001)
-//
-//                                  pid.Integral-=0.001;//调I
                               key_value=0;
                               break;
                       case(9):
@@ -440,12 +437,49 @@ void usrt_key()
                 case(50):
                       pid.setPoint=32;
                       recive=0;
-                    break;
+                      break;
                 case(49):
                       pid.setPoint=31;
                       recive=0;
+                      break;
                 case(48):
+                      recive=0;
                       pid.setPoint=30;
+                      break;
+                case(47):
+                      recive=0;
+                      pid.setPoint=29;
+                      break;
+                case(46):
+                      recive=0;
+                      pid.setPoint=28;
+                      break;
+                case(45):
+                      recive=0;
+                      pid.setPoint=27;
+                      break;
+                case(44):
+                      pid.setPoint=26;
+                      recive=0;
+                      break;
+                case(43):
+                      pid.setPoint=25;
+                      recive=0;
+                      break;
+                case(55):
+                      recive=0;
+                      pid.setPoint=37;
+                      break;
+                case(56):
+                      recive=0;
+                      pid.setPoint=38;
+                      break;
+                case(57):
+                      recive=0;
+                      pid.setPoint=39;
+                      break;
+                case(58):
+                      pid.setPoint=40;
                       recive=0;
                     break;
                 default:break;
