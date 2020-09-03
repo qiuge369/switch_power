@@ -66,7 +66,7 @@ int main(void)
     {
         True_voltage=getVoltage();
 
-        if((True_voltage-pid.setPoint>=0.031)||(pid.setPoint-True_voltage>=0.041))
+        if((True_voltage-pid.setPoint>=0.030)||(pid.setPoint-True_voltage>=0.030))
         {
             pidAdjust(True_voltage);
         }
